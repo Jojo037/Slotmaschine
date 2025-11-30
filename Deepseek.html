@@ -1,0 +1,2324 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Charm Slot Machine - Fehlerfrei</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1600px;
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .game-area, .charm-store, .black-market {
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
+            background: rgba(30, 30, 40, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-area {
+            flex: 2;
+            border: 2px solid #4cc9f0;
+        }
+
+        .charm-store {
+            flex: 1;
+            max-height: 800px;
+            overflow-y: auto;
+            border: 2px solid #f72585;
+        }
+
+        .black-market {
+            flex: 1;
+            max-height: 800px;
+            overflow-y: auto;
+            border: 2px solid #ffaa00;
+            background: linear-gradient(135deg, #1a1a1a, #2a1a0a);
+        }
+
+        h1, h2, h3 {
+            color: #ffd700;
+            border-bottom: 2px solid #444;
+            padding-bottom: 8px;
+            margin-top: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .black-market h2, .black-market h3 {
+            color: #ffaa00;
+            border-bottom-color: #664400;
+        }
+
+        /* --- SLOT GRID STYLES --- */
+        #slotGrid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 4px solid #4361ee;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .reel-cell {
+            width: 100%;
+            height: 90px;
+            background: linear-gradient(145deg, #2d2d2d, #222);
+            border: 2px solid #4a4a4a;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5em;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .reel-inner {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            line-height: 90px;
+            font-size: 1em;
+            will-change: transform;
+            backface-visibility: hidden;
+            transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), filter 0.2s;
+        }
+        
+        /* Animationen */
+        @keyframes fast-spin {
+            100% { transform: translateY(-4000px); }
+        }
+
+        .spinning {
+            filter: blur(4px);
+        }
+        
+        .spinning .reel-inner {
+            animation: fast-spin 0.08s linear infinite;
+        }
+
+        .win-highlight {
+            border: 3px solid #ff4500;
+            box-shadow: 0 0 20px #ff4500, inset 0 0 10px #ff4500;
+            animation: pulse 0.6s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .jackpot-highlight {
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 30px #ffd700, inset 0 0 15px #ffd700;
+            animation: jackpot-pulse 0.8s infinite;
+        }
+
+        @keyframes jackpot-pulse {
+            0%, 100% { transform: scale(1); background: linear-gradient(145deg, #2d2d2d, #222); }
+            50% { transform: scale(1.1); background: linear-gradient(145deg, #4a4a2d, #3a3a22); }
+        }
+
+        /* --- INFO & CONTROLS --- */
+        .info-panel {
+            background: linear-gradient(135deg, #2d2d42, #3a3a5a);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 6px solid #00aaff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .info-panel p {
+            margin: 8px 0;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-label {
+            color: #ccc;
+        }
+
+        .info-value {
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .prestige-value {
+            color: #ff9900;
+        }
+
+        .black-market-value {
+            color: #ffaa00;
+        }
+        
+        #prestigeTimerDisplay, #bestTimeDisplay {
+             font-size: 0.9em;
+             color: #aaa;
+        }
+
+        #message {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            border: 1px solid #7209b7;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+            font-size: 1em;
+            min-height: 44px;
+        }
+
+        #spinButton {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            font-size: 1.3em;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        #spinButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        #spinButton:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #prestigeButton {
+            background: linear-gradient(135deg, #ff9900, #e68900);
+            color: black;
+            font-size: 1.1em;
+            width: 100%;
+        }
+
+        #prestigeButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 153, 0, 0.4);
+        }
+
+        #prestigeButton:disabled {
+            background: #666;
+        }
+
+        .secondary-button {
+            background: linear-gradient(135deg, #7209b7, #5a08a0);
+            color: white;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .secondary-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(114, 9, 183, 0.4);
+        }
+
+        .black-market-button {
+            background: linear-gradient(135deg, #ffaa00, #cc8800);
+            color: black;
+            font-weight: bold;
+        }
+
+        .black-market-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.4);
+        }
+
+        .black-market-button:disabled {
+            background: #666;
+            color: #999;
+        }
+
+        .danger-button {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .danger-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        /* --- CHARM STORE STYLES --- */
+        .charm-category {
+            margin-bottom: 25px;
+        }
+
+        .charm-category h3 {
+            color: #4cc9f0;
+            border-bottom: 1px solid #4cc9f0;
+            padding-bottom: 5px;
+        }
+
+        .charm-item {
+            background: linear-gradient(135deg, #383854, #2d2d42);
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            border-left: 5px solid #8a2be2;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .charm-item:hover {
+            transform: translateX(5px);
+            background: linear-gradient(135deg, #404060, #35354a);
+        }
+
+        .black-market-item {
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-left: 5px solid #ffaa00;
+            border: 1px solid #664400;
+        }
+
+        .black-market-item:hover {
+            background: linear-gradient(135deg, #3a2a1a, #2a1a0a);
+        }
+
+        .charm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .charm-header strong {
+            font-size: 1.1em;
+            color: #fff;
+        }
+
+        .charm-level {
+            background: #4361ee;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+        }
+
+        .black-market-level {
+            background: #ffaa00;
+            color: black;
+        }
+
+        .charm-status {
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .charm-status.max {
+            color: #ffd700;
+        }
+
+        .charm-item button {
+            background: linear-gradient(135deg, #8a2be2, #7b1fa2);
+            color: white;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 6px;
+        }
+        
+        .charm-item button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(138, 43, 226, 0.4);
+        }
+        
+        .charm-item button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        #charmDescription {
+            background: linear-gradient(135deg, #2d2d42, #252536);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            min-height: 80px;
+            font-size: 0.95em;
+            color: #ccc;
+            border: 1px solid #4361ee;
+        }
+
+        .black-market-description {
+            background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+            border: 1px solid #ffaa00;
+            color: #ffaa00;
+        }
+        
+        #boostSelectorDiv {
+            padding: 15px;
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid #f72585;
+        }
+
+        /* Progress Bars */
+        .charm-progress {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc6a);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .black-market-progress {
+            background: #332200;
+        }
+
+        .black-market-progress-fill {
+            background: linear-gradient(90deg, #ffaa00, #cc8800);
+        }
+
+        /* Cooldown Timer */
+        .cooldown-timer {
+            font-size: 0.8em;
+            color: #ff6666;
+            margin-top: 5px;
+        }
+
+        /* Mobile Optimierungen */
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .game-area, .charm-store, .black-market {
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .reel-cell {
+                height: 70px;
+                font-size: 2.8em;
+            }
+            
+            .reel-inner {
+                line-height: 70px;
+            }
+            
+            button {
+                padding: 15px 20px;
+                min-height: 50px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            #spinButton {
+                min-width: 100%;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .charm-store::-webkit-scrollbar,
+        .black-market::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .charm-store::-webkit-scrollbar-track {
+            background: #2d2d42;
+            border-radius: 4px;
+        }
+
+        .charm-store::-webkit-scrollbar-thumb {
+            background: #7209b7;
+            border-radius: 4px;
+        }
+
+        .black-market::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .black-market::-webkit-scrollbar-thumb {
+            background: #ffaa00;
+            border-radius: 4px;
+        }
+
+        /* Achievement Styles */
+        .achievement-unlocked {
+            background: linear-gradient(135deg, #2a4a2a, #1a3a1a);
+            border-left: 5px solid #00ff88;
+        }
+
+        .achievement-locked {
+            background: linear-gradient(135deg, #3a2a2a, #2a1a1a);
+            border-left: 5px solid #666;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎰 Ultimate Charm Slot Machine + Schwarzmarkt 🔥</h1>
+    <div id="message" role="status" aria-live="polite">Willkommen! Starte mit 1000 Credits.</div>
+
+    <div class="container">
+        
+        <div class="game-area">
+            
+            <div class="info-panel">
+                <p><span class="info-label">Guthaben:</span> <span id="balance" class="info-value">1000</span></p>
+                <p><span class="info-label">Einsatz pro Spin:</span> <span id="currentBet" class="info-value">100</span></p>
+                <p><span class="info-label">Charm-Punkte:</span> <span id="charmPoints" class="info-value">0</span> P</p>
+                <p><span class="info-label">Schwarzmarkt-Punkte:</span> <span id="blackMarketPoints" class="black-market-value">0</span> 🔥</p>
+                <p><span class="info-label">Nieten in Folge:</span> <span id="consecutiveLossesDisplay" class="info-value">0</span></p>
+                <p><span class="info-label">Gewinne in Folge:</span> <span id="consecutiveWinsDisplay" class="info-value">0</span></p>
+                <p><span class="info-label">Gesamt-Spins:</span> <span id="totalSpinsDisplay" class="info-value">0</span></p>
+                <p id="prestigeLevelDisplay"><span class="info-label">Prestige Level:</span> <span class="prestige-value">0 (Bonus: +0%)</span></p>
+                <p id="prestigeTimerDisplay"><span class="info-label">⏱️ Prestige Zeit:</span> <span class="info-value">Nicht gestartet</span></p>
+                <p id="bestTimeDisplay"><span class="info-label">🏆 Bestzeit:</span> <span class="info-value">Keine</span></p>
+            </div>
+            
+            <div id="slotGrid" role="grid" aria-label="Slot Machine Walzen">
+                <!-- Wird durch JavaScript gefüllt -->
+            </div>
+
+            <div class="controls">
+                <button id="spinButton" onclick="spin()" aria-label="Walzen drehen für 100 Credits">DREHEN (100 Credits)</button>
+                <button class="secondary-button" onclick="quickSpin()">SCHNELLDREH</button>
+                <button class="secondary-button" onclick="maxBet()">MAX EINSATZ</button>
+                <button class="secondary-button" onclick="resetGame()">NEUSTART</button>
+                <button class="secondary-button" onclick="saveGame()">SPEICHERN</button>
+            </div>
+            
+            <div id="boostSelectorDiv">
+                <h3>🚫 Anti-Niete Boost Symbol</h3>
+                <p>Aktuelles Boost-Symbol: <span id="boostedSymbolDisplay" class="info-value">🍒</span></p>
+                <select id="boostSymbolSelector" onchange="setBoostSymbol(this.value)"></select>
+            </div>
+
+        </div>
+
+        <div class="charm-store">
+            <h2>✨ Erweiterter Charm Shop</h2>
+            <p>Klicke auf einen Charm für Details!</p>
+            <div id="charmDescription"></div>
+            
+            <button id="prestigeButton" onclick="activatePrestige()">⭐ PRESTIGE AKTIVIEREN (10000 P)</button>
+            
+            <!-- Basis Charms -->
+            <div class="charm-category">
+                <h3>🎯 Basis Charms</h3>
+                
+                <div class="charm-item" onclick="showPermanentCharmInfo('luckyStart')">
+                    <div class="charm-header">
+                        <strong>🍀 Lucky Start</strong>
+                        <span class="charm-level">Lvl <span id="statusLuckyStart">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressLuckyStart" style="width: 0%"></div></div>
+                    <button id="buyLuckyStart" onclick="event.stopPropagation(); buyPermanentCharm('luckyStart')">KAUFEN (100 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('doubleDiamond')">
+                    <div class="charm-header">
+                        <strong>💎 Double Diamond</strong>
+                        <span class="charm-level">Lvl <span id="statusDoubleDiamond">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressDoubleDiamond" style="width: 0%"></div></div>
+                    <button id="buyDoubleDiamond" onclick="event.stopPropagation(); buyPermanentCharm('doubleDiamond')">KAUFEN (200 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('wildGem')">
+                    <div class="charm-header">
+                        <strong>🌟 Wild Gem</strong>
+                        <span class="charm-level">Lvl <span id="statusWildGem">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressWildGem" style="width: 0%"></div></div>
+                    <button id="buyWildGem" onclick="event.stopPropagation(); buyPermanentCharm('wildGem')">KAUFEN (400 P)</button>
+                </div>
+            </div>
+
+            <!-- Schutz Charms -->
+            <div class="charm-category">
+                <h3>🛡️ Schutz Charms</h3>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('antiLossBoost')">
+                    <div class="charm-header">
+                        <strong>🚫 Anti-Loss Boost</strong>
+                        <span class="charm-level">Lvl <span id="statusAntiLossBoost">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressAntiLossBoost" style="width: 0%"></div></div>
+                    <button id="buyAntiLossBoost" onclick="event.stopPropagation(); buyPermanentCharm('antiLossBoost')">KAUFEN (300 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('lossStreakProtection')">
+                    <div class="charm-header">
+                        <strong>🛡️ Loss Streak Protection</strong>
+                        <span class="charm-level">Lvl <span id="statusLossStreakProtection">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressLossStreakProtection" style="width: 0%"></div></div>
+                    <button id="buyLossStreakProtection" onclick="event.stopPropagation(); buyPermanentCharm('lossStreakProtection')">KAUFEN (550 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('lastChance')">
+                    <div class="charm-header">
+                        <strong>🆘 Last Chance</strong>
+                        <span class="charm-level">Lvl <span id="statusLastChance">0</span>/1</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressLastChance" style="width: 0%"></div></div>
+                    <button id="buyLastChance" onclick="event.stopPropagation(); buyPermanentCharm('lastChance')">KAUFEN (800 P)</button>
+                </div>
+            </div>
+
+            <!-- Bonus Charms -->
+            <div class="charm-category">
+                <h3>💰 Bonus Charms</h3>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('charmMastery')">
+                    <div class="charm-header">
+                        <strong>⭐ Charm Mastery</strong>
+                        <span class="charm-level">Lvl <span id="statusCharmMastery">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressCharmMastery" style="width: 0%"></div></div>
+                    <button id="buyCharmMastery" onclick="event.stopPropagation(); buyPermanentCharm('charmMastery')">KAUFEN (350 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('puritySevens')">
+                    <div class="charm-header">
+                        <strong>7️⃣ Purity Sevens</strong>
+                        <span class="charm-level">Lvl <span id="statusPuritySevens">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressPuritySevens" style="width: 0%"></div></div>
+                    <button id="buyPuritySevens" onclick="event.stopPropagation(); buyPermanentCharm('puritySevens')">KAUFEN (500 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('luckyMoney')">
+                    <div class="charm-header">
+                        <strong>💰 Lucky Money</strong>
+                        <span class="charm-level">Lvl <span id="statusLuckyMoney">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressLuckyMoney" style="width: 0%"></div></div>
+                    <button id="buyLuckyMoney" onclick="event.stopPropagation(); buyPermanentCharm('luckyMoney')">KAUFEN (450 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('wealthBlessing')">
+                    <div class="charm-header">
+                        <strong>🏦 Wealth Blessing</strong>
+                        <span class="charm-level">Lvl <span id="statusWealthBlessing">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressWealthBlessing" style="width: 0%"></div></div>
+                    <button id="buyWealthBlessing" onclick="event.stopPropagation(); buyPermanentCharm('wealthBlessing')">KAUFEN (700 P)</button>
+                </div>
+            </div>
+
+            <!-- Spezial Charms -->
+            <div class="charm-category">
+                <h3>⚡ Spezial Charms</h3>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('freeUpgrade')">
+                    <div class="charm-header">
+                        <strong>📈 Free Upgrade</strong>
+                        <span class="charm-level">Lvl <span id="statusFreeUpgrade">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressFreeUpgrade" style="width: 0%"></div></div>
+                    <button id="buyFreeUpgrade" onclick="event.stopPropagation(); buyPermanentCharm('freeUpgrade')">KAUFEN (600 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('consolationPrize')">
+                    <div class="charm-header">
+                        <strong>💸 Consolation Prize</strong>
+                        <span class="charm-level">Lvl <span id="statusConsolationPrize">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressConsolationPrize" style="width: 0%"></div></div>
+                    <button id="buyConsolationPrize" onclick="event.stopPropagation(); buyPermanentCharm('consolationPrize')">KAUFEN (650 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('speedBlessing')">
+                    <div class="charm-header">
+                        <strong>⏱️ Speed Blessing</strong>
+                        <span class="charm-level">Lvl <span id="statusSpeedBlessing">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressSpeedBlessing" style="width: 0%"></div></div>
+                    <button id="buySpeedBlessing" onclick="event.stopPropagation(); buyPermanentCharm('speedBlessing')">KAUFEN (380 P)</button>
+                </div>
+
+                <!-- NEUE CHARMS -->
+                <div class="charm-item" onclick="showPermanentCharmInfo('mysteryBox')">
+                    <div class="charm-header">
+                        <strong>🎁 Mystery Box</strong>
+                        <span class="charm-level">Lvl <span id="statusMysteryBox">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressMysteryBox" style="width: 0%"></div></div>
+                    <button id="buyMysteryBox" onclick="event.stopPropagation(); buyPermanentCharm('mysteryBox')">KAUFEN (900 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('jackpotHunter')">
+                    <div class="charm-header">
+                        <strong>🏆 Jackpot Hunter</strong>
+                        <span class="charm-level">Lvl <span id="statusJackpotHunter">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressJackpotHunter" style="width: 0%"></div></div>
+                    <button id="buyJackpotHunter" onclick="event.stopPropagation(); buyPermanentCharm('jackpotHunter')">KAUFEN (1200 P)</button>
+                </div>
+
+                <div class="charm-item" onclick="showPermanentCharmInfo('timeWarp')">
+                    <div class="charm-header">
+                        <strong>⏰ Time Warp</strong>
+                        <span class="charm-level">Lvl <span id="statusTimeWarp">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress"><div class="progress-fill" id="progressTimeWarp" style="width: 0%"></div></div>
+                    <button id="buyTimeWarp" onclick="event.stopPropagation(); buyPermanentCharm('timeWarp')">KAUFEN (1100 P)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEUER SCHWARZMARKT -->
+        <div class="black-market">
+            <h2>🔦 Schwarzmarkt - Verbotene Macht</h2>
+            <p>Riskante Upgrades für große Gewinne! Koste: Schwarzmarkt-Punkte 🔥</p>
+            <div id="blackMarketDescription" class="black-market-description">Klicke auf ein Item für Details!</div>
+            
+            <div class="charm-category">
+                <h3>💀 Riskante Wetten</h3>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('allOrNothing')">
+                    <div class="charm-header">
+                        <strong>🎲 All or Nothing</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusAllOrNothing">0</span>/3</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressAllOrNothing" style="width: 0%"></div></div>
+                    <div class="cooldown-timer" id="cooldownAllOrNothing"></div>
+                    <button class="black-market-button" id="buyAllOrNothing" onclick="event.stopPropagation(); buyBlackMarketItem('allOrNothing')">KAUFEN (50 🔥)</button>
+                </div>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('doubleTrouble')">
+                    <div class="charm-header">
+                        <strong>⚔️ Double Trouble</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusDoubleTrouble">0</span>/3</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressDoubleTrouble" style="width: 0%"></div></div>
+                    <button class="black-market-button" id="buyDoubleTrouble" onclick="event.stopPropagation(); buyBlackMarketItem('doubleTrouble')">KAUFEN (100 🔥)</button>
+                </div>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('luckStealer')">
+                    <div class="charm-header">
+                        <strong>👻 Luck Stealer</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusLuckStealer">0</span>/3</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressLuckStealer" style="width: 0%"></div></div>
+                    <div class="cooldown-timer" id="cooldownLuckStealer"></div>
+                    <button class="black-market-button" id="buyLuckStealer" onclick="event.stopPropagation(); buyBlackMarketItem('luckStealer')">KAUFEN (200 🔥)</button>
+                </div>
+            </div>
+
+            <div class="charm-category">
+                <h3>🔮 Verbotene Magie</h3>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('soulContract')">
+                    <div class="charm-header">
+                        <strong>📜 Soul Contract</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusSoulContract">0</span>/1</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressSoulContract" style="width: 0%"></div></div>
+                    <button class="black-market-button danger-button" id="buySoulContract" onclick="event.stopPropagation(); buyBlackMarketItem('soulContract')">UNTERZEICHNEN (500 🔥)</button>
+                </div>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('timeManipulation')">
+                    <div class="charm-header">
+                        <strong>⏳ Time Manipulation</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusTimeManipulation">0</span>/3</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressTimeManipulation" style="width: 0%"></div></div>
+                    <div class="cooldown-timer" id="cooldownTimeManipulation"></div>
+                    <button class="black-market-button" id="buyTimeManipulation" onclick="event.stopPropagation(); buyBlackMarketItem('timeManipulation')">KAUFEN (300 🔥)</button>
+                </div>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('realityBender')">
+                    <div class="charm-header">
+                        <strong>🌀 Reality Bender</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusRealityBender">0</span>/3</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressRealityBender" style="width: 0%"></div></div>
+                    <button class="black-market-button" id="buyRealityBender" onclick="event.stopPropagation(); buyBlackMarketItem('realityBender')">KAUFEN (400 🔥)</button>
+                </div>
+            </div>
+
+            <div class="charm-category">
+                <h3>🏆 Elite Upgrades</h3>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('prestigeAccelerator')">
+                    <div class="charm-header">
+                        <strong>🚀 Prestige Accelerator</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusPrestigeAccelerator">0</span>/5</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressPrestigeAccelerator" style="width: 0%"></div></div>
+                    <button class="black-market-button" id="buyPrestigeAccelerator" onclick="event.stopPropagation(); buyBlackMarketItem('prestigeAccelerator')">KAUFEN (250 🔥)</button>
+                </div>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('blackHole')">
+                    <div class="charm-header">
+                        <strong>🕳️ Black Hole</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusBlackHole">0</span>/3</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressBlackHole" style="width: 0%"></div></div>
+                    <div class="cooldown-timer" id="cooldownBlackHole"></div>
+                    <button class="black-market-button" id="buyBlackHole" onclick="event.stopPropagation(); buyBlackMarketItem('blackHole')">KAUFEN (600 🔥)</button>
+                </div>
+
+                <div class="charm-item black-market-item" onclick="showBlackMarketInfo('infinityGauntlet')">
+                    <div class="charm-header">
+                        <strong>🦾 Infinity Gauntlet</strong>
+                        <span class="charm-level black-market-level">Lvl <span id="statusInfinityGauntlet">0</span>/1</span>
+                    </div>
+                    <div class="charm-progress black-market-progress"><div class="progress-fill black-market-progress-fill" id="progressInfinityGauntlet" style="width: 0%"></div></div>
+                    <button class="black-market-button danger-button" id="buyInfinityGauntlet" onclick="event.stopPropagation(); buyBlackMarketItem('infinityGauntlet')">ERWERBEN (1000 🔥)</button>
+                </div>
+            </div>
+
+            <div class="charm-category">
+                <h3>🎯 Achievements</h3>
+                <div id="achievementsList">
+                    <!-- Achievements werden dynamisch geladen -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- KORRIGIERTE JAVASCRIPT LOGIK ---
+        let initialBalance = 1000;
+        let balance = 1000;
+        let charmPoints = 0;
+        let blackMarketPoints = 0;
+        let consecutiveLosses = 0;
+        let consecutiveWins = 0;
+        let totalSpins = 0;
+        let lastChanceUsed = false;
+        let prestigeLevel = 0;
+        let prestigeMultiplier = 0.0;
+        let prestigeStartTime = null;
+        let isTimingPrestige = false;
+        let isSpinning = false;
+        let quickSpinMode = false;
+        let currentBet = 100;
+
+        const lineBet = 10;
+        const symbols = ['🍒', '🍒', '🍒', '🍋', '🍋', '💎', '🔔', '🔔', '⭐', '7️⃣'];
+        const NUM_ROWS = 3;
+        const NUM_REELS = 5;
+        const MAX_CHARM_LEVEL = 5;
+        const MAX_BLACK_MARKET_LEVEL = 3;
+        const PRESTIGE_COST = 10000;
+        const SYMBOL_HEIGHT = 90;
+
+        // Symbol Cache für Performance
+        const symbolCache = {};
+
+        // Cooldown-Timer für Schwarzmarkt-Items
+        const blackMarketCooldowns = {
+            allOrNothing: 0,
+            luckStealer: 0,
+            timeManipulation: 0,
+            blackHole: 0
+        };
+
+        // Achievements System
+        const achievements = {
+            firstWin: { unlocked: false, name: "Erster Gewinn", description: "Gewinne dein erstes Spiel", reward: 100 },
+            jackpotKing: { unlocked: false, name: "Jackpot König", description: "Gewinne einen 5x 7er Jackpot", reward: 500 },
+            prestigeMaster: { unlocked: false, name: "Prestige Meister", description: "Erreiche Prestige Level 5", reward: 1000 },
+            blackMarketLord: { unlocked: false, name: "Schwarzmarkt Lord", description: "Kaufe alle Schwarzmarkt-Items", reward: 2000 },
+            spinAddict: { unlocked: false, name: "Spin-Süchtiger", description: "Mache 1000 Spins", reward: 500 },
+            millionaire: { unlocked: false, name: "Millionär", description: "Erreiche 1.000.000 Credits", reward: 5000 },
+            unlucky: { unlocked: false, name: "Unglückspilz", description: "Habe 20 Nieten in Folge", reward: 200 },
+            luckyStreak: { unlocked: false, name: "Glückssträhne", description: "Habe 10 Gewinne in Folge", reward: 300 }
+        };
+
+        let permanentCharms = {
+            // Bestehende Charms
+            luckyStart: 0, doubleDiamond: 0, antiLossBoost: 0,
+            boostSymbol: '🍒', charmMastery: 0, puritySevens: 0, wildGem: 0,
+            lossStreakProtection: 0, luckyMoney: 0, freeUpgrade: 0,
+            consolationPrize: 0, wealthBlessing: 0, lastChance: 0, speedBlessing: 0,
+            mysteryBox: 0, jackpotHunter: 0, timeWarp: 0
+        };
+
+        // Schwarzmarkt-Items
+        let blackMarketItems = {
+            allOrNothing: 0,        // Riskante Wetten mit hohem Gewinn/Verlust
+            doubleTrouble: 0,       // Doppelte Gewinne aber auch doppelte Verluste
+            luckStealer: 0,         // Stehle Glück von zukünftigen Spins
+            soulContract: 0,        // Permanenter Bonus mit Risiko
+            timeManipulation: 0,    // Manipuliere die Spin-Zeit
+            realityBender: 0,       // Verändere die Gewinnwahrscheinlichkeiten
+            prestigeAccelerator: 0, // Schnelleres Prestige
+            blackHole: 0,           // Verschlingt Nieten für Boni
+            infinityGauntlet: 0     // Ultimative Macht
+        };
+
+        // ERWEITERTE CHARM DATEN (Level 5 für alle)
+        const CHARM_DATA = {
+            luckyStart: {
+                cost: [100, 200, 400, 800, 1600],
+                desc: [
+                    "Garantiert eine Kirsche (🍒) auf der ersten Walze in der Mitte.",
+                    "Garantiert eine Kirsche (🍒) auf der ersten und zweiten Walze in der Mitte.",
+                    "Garantiert eine Zitrone (🍋) auf der ersten und zweiten Walze in der Mitte.",
+                    "Garantiert eine Glocke (🔔) auf den ersten drei Walzen in der Mitte.",
+                    "Garantiert einen Diamanten (💎) auf den ersten drei Walzen in der Mitte."
+                ]
+            },
+            doubleDiamond: {
+                cost: [200, 300, 500, 1000, 2000],
+                desc: [
+                    "Diamanten (💎) erscheinen öfter auf den Walzen.",
+                    "Diamanten erscheinen noch öfter auf den Walzen (+2 Symbole).",
+                    "Diamanten erscheinen sehr viel öfter auf den Walzen (+4 Symbole).",
+                    "Diamanten erscheinen extrem oft auf den Walzen (+8 Symbole).",
+                    "Diamanten dominieren die Walzen (+16 Symbole)."
+                ]
+            },
+            antiLossBoost: {
+                cost: [300, 500, 800, 1200, 2000],
+                desc: [
+                    "Nach 3 Nieten gibt der nächste Spin 3x dein Boost-Symbol in der Mitte.",
+                    "Nach 3 Nieten gibt der nächste Spin 4x dein Boost-Symbol in der Mitte.",
+                    "Nach 3 Nieten gibt der nächste Spin 5x dein Boost-Symbol in der Mitte (Garantierter 5er-Win).",
+                    "Nach 2 Nieten gibt der nächste Spin 5x dein Boost-Symbol in der Mitte.",
+                    "Nach 1 Niete gibt der nächste Spin 5x dein Boost-Symbol in der Mitte."
+                ]
+            },
+            charmMastery: {
+                cost: [350, 550, 750, 1000, 1500],
+                desc: [
+                    "Du gewinnst immer mindestens 10 Charm-Punkte pro Spin (statt 5).",
+                    "Du gewinnst immer mindestens 15 Charm-Punkte pro Spin.",
+                    "Du gewinnst immer mindestens 20 Charm-Punkte pro Spin.",
+                    "Du gewinnst immer mindestens 30 Charm-Punkte pro Spin.",
+                    "Du gewinnst immer mindestens 50 Charm-Punkte pro Spin."
+                ]
+            },
+            puritySevens: {
+                cost: [500, 700, 900, 1200, 1800],
+                desc: [
+                    "Wenn du nur mit 7️⃣-Symbolen gewinnst, wird der Gewinn verdoppelt.",
+                    "Wenn du nur mit 7️⃣-Symbolen gewinnst, wird der Gewinn verdreifacht (x3).",
+                    "Wenn du nur mit 7️⃣-Symbolen gewinnst, wird der Gewinn vervierfacht (x4).",
+                    "Wenn du nur mit 7️⃣-Symbolen gewinnst, wird der Gewinn verfünffacht (x5).",
+                    "Wenn du nur mit 7️⃣-Symbolen gewinnst, wird der Gewinn verzehnfacht (x10)."
+                ]
+            },
+            wildGem: {
+                cost: [400, 600, 800, 1200, 2000],
+                desc: [
+                    "Das Diamant-Symbol (💎) ersetzt andere Symbole (außer 7️⃣) für Gewinne.",
+                    "Diamant (💎) ersetzt nun alle Symbole (auch 7️⃣) für Gewinne.",
+                    "Diamant (💎) ersetzt alle Symbole und erhöht den Liniengewinn um 10%.",
+                    "Diamant (💎) ersetzt alle Symbole und erhöht den Liniengewinn um 20%.",
+                    "Diamant (💎) ersetzt alle Symbole und erhöht den Liniengewinn um 50%."
+                ]
+            },
+            lossStreakProtection: {
+                cost: [550, 750, 950, 1300, 1800],
+                desc: [
+                    "Nach einem Anti-Niete Boost wird der Nieten-Zähler nur auf 1 (statt 0) zurückgesetzt.",
+                    "Nach einem Anti-Niete Boost wird der Nieten-Zähler nur auf 2 zurückgesetzt.",
+                    "Nach einem Anti-Niete Boost wird der Nieten-Zähler auf 0 zurückgesetzt und du erhältst 50 Credits.",
+                    "Nach einem Anti-Niete Boost wird der Nieten-Zähler auf 0 zurückgesetzt und du erhältst 100 Credits.",
+                    "Nach einem Anti-Niete Boost wird der Nieten-Zähler auf 0 zurückgesetzt und du erhältst 200 Credits."
+                ]
+            },
+            luckyMoney: {
+                cost: [450, 650, 850, 1200, 1800],
+                desc: [
+                    "Du gewinnst pro Spin zusätzlich 1 Credit pro 1 Charm-Punkt (max. 200 Credits).",
+                    "Du gewinnst pro Spin zusätzlich 1.5 Credits per 1 Charm-Punkt (max. 300 Credits).",
+                    "Du gewinnst pro Spin zusätzlich 2 Credits per 1 Charm-Punkt (max. 400 Credits).",
+                    "Du gewinnst pro Spin zusätzlich 3 Credits per 1 Charm-Punkt (max. 600 Credits).",
+                    "Du gewinnst pro Spin zusätzlich 5 Credits per 1 Charm-Punkt (max. 1000 Credits)."
+                ]
+            },
+            freeUpgrade: {
+                cost: [600, 800, 1000, 1500, 2500],
+                desc: [
+                    "Wenn du 10 Spins in Folge gewinnst, erhältst du 100 Charm-Punkte.",
+                    "Wenn du 5 Spins in Folge gewinnst, erhältst du 100 Charm-Punkte.",
+                    "Wenn du 3 Spins in Folge gewinnst, erhältst du 100 Charm-Punkte.",
+                    "Wenn du 2 Spins in Folge gewinnst, erhältst du 100 Charm-Punkte.",
+                    "Jeder Gewinn gibt dir 50 Charm-Punkte."
+                ]
+            },
+            consolationPrize: {
+                cost: [650, 850, 1050, 1400, 2000],
+                desc: [
+                    "Jede Niete gibt dir 10 Credits zurück.",
+                    "Jede Niete gibt dir 20 Credits zurück.",
+                    "Jede Niete gibt dir 30 Credits zurück.",
+                    "Jede Niete gibt dir 50 Credits zurück.",
+                    "Jede Niete gibt dir 100 Credits zurück."
+                ]
+            },
+            wealthBlessing: {
+                cost: [700, 900, 1100, 1500, 2200],
+                desc: [
+                    "Du erhältst pro Spin +1 Charm-Punkt für jede 50 Credits Guthaben.",
+                    "Du erhältst pro Spin +1.5 Charm-Punkte für jede 50 Credits Guthaben.",
+                    "Du erhältst pro Spin +2 Charm-Punkte für jede 50 Credits Guthaben.",
+                    "Du erhältst pro Spin +3 Charm-Punkte für jede 50 Credits Guthaben.",
+                    "Du erhältst pro Spin +5 Charm-Punkte für jede 50 Credits Guthaben."
+                ]
+            },
+            lastChance: {
+                cost: [800, 0, 0, 0, 0],
+                desc: [
+                    "Wenn dein Guthaben unter den Einsatz fällt, bekommst du einmalig 500 Credits zurück.",
+                    "Bereits gekauft und eingesetzt.",
+                    "Bereits gekauft und eingesetzt.",
+                    "Bereits gekauft und eingesetzt.",
+                    "Bereits gekauft und eingesetzt."
+                ]
+            },
+            speedBlessing: {
+                cost: [380, 580, 780, 1100, 1700],
+                desc: [
+                    "Halbiert die Drehzeit der Walzen (Spin geht schneller).",
+                    "Reduziert die Drehzeit der Walzen um 70%.",
+                    "Reduziert die Drehzeit der Walzen um 85% (Fast sofort).",
+                    "Reduziert die Drehzeit der Walzen um 90%.",
+                    "Reduziert die Drehzeit der Walzen um 95% (Sofort)."
+                ]
+            },
+            mysteryBox: {
+                cost: [900, 1200, 1500, 2000, 3000],
+                desc: [
+                    "Jede 10. Niete gibt dir eine Mystery-Box mit 100-500 Credits.",
+                    "Jede 7. Niete gibt dir eine Mystery-Box mit 200-600 Credits.",
+                    "Jede 5. Niete gibt dir eine Mystery-Box mit 300-800 Credits.",
+                    "Jede 3. Niete gibt dir eine Mystery-Box mit 500-1000 Credits.",
+                    "Jede Niete gibt dir eine Mystery-Box mit 100-200 Credits."
+                ]
+            },
+            jackpotHunter: {
+                cost: [1200, 1500, 2000, 3000, 5000],
+                desc: [
+                    "Erhöht die Chance auf 7️⃣-Symbole um 50%.",
+                    "Erhöht die Chance auf 7️⃣-Symbole um 100% und verdoppelt 7er-Gewinne.",
+                    "Verdreifacht die Chance auf 7️⃣-Symbole und verdreifacht 7er-Gewinne.",
+                    "Verfünffacht die Chance auf 7️⃣-Symbole und verfünffacht 7er-Gewinne.",
+                    "Verzehnfacht die Chance auf 7️⃣-Symbole und verzehnfacht 7er-Gewinne."
+                ]
+            },
+            timeWarp: {
+                cost: [1100, 1400, 1800, 2500, 4000],
+                desc: [
+                    "Jede Stunde Spielzeit gibt dir 100 Charm-Punkte.",
+                    "Jede halbe Stunde Spielzeit gibt dir 100 Charm-Punkte.",
+                    "Jede 15 Minuten Spielzeit gibt dir 100 Charm-Punkte.",
+                    "Jede 5 Minuten Spielzeit gibt dir 100 Charm-Punkte.",
+                    "Jede Minute Spielzeit gibt dir 50 Charm-Punkte."
+                ]
+            }
+        };
+
+        // SCHWARZMARKT DATEN
+        const BLACK_MARKET_DATA = {
+            allOrNothing: {
+                cost: [50, 100, 200],
+                desc: [
+                    "RISIKO: Nächster Spin gewinnt 10x oder verliert alles! (5min Cooldown)",
+                    "RISIKO: Nächster Spin gewinnt 20x oder verliert alles! (4min Cooldown)", 
+                    "RISIKO: Nächster Spin gewinnt 50x oder verliert alles! (3min Cooldown)"
+                ],
+                cooldown: [300, 240, 180]
+            },
+            doubleTrouble: {
+                cost: [100, 200, 400],
+                desc: [
+                    "Doppelte Gewinne aber auch doppelte Verluste für 10 Spins.",
+                    "Dreifache Gewinne aber auch dreifache Verluste für 15 Spins.",
+                    "Vierfache Gewinne aber auch vierfache Verluste für 20 Spins."
+                ]
+            },
+            luckStealer: {
+                cost: [200, 400, 800],
+                desc: [
+                    "Stehle Glück von deinen nächsten 50 Spins für diesen Spin. (10min Cooldown)",
+                    "Stehle Glück von deinen nächsten 100 Spins für diesen Spin. (8min Cooldown)",
+                    "Stehle Glück von deinen nächsten 200 Spins für diesen Spin. (6min Cooldown)"
+                ],
+                cooldown: [600, 480, 360]
+            },
+            soulContract: {
+                cost: [500, 0, 0],
+                desc: [
+                    "Permanenter 25% Gewinn-Bonus, aber du verlierst 10% deiner Charm-Punkte bei jedem Prestige.",
+                    "Vertrag unterschrieben - Kein Zurück!"
+                ]
+            },
+            timeManipulation: {
+                cost: [300, 600, 1200],
+                desc: [
+                    "Verlangsame die Zeit für 30 Sekunden um bessere Symbole zu sehen. (15min Cooldown)",
+                    "Verlangsame die Zeit für 45 Sekunden um bessere Symbole zu sehen. (12min Cooldown)",
+                    "Stoppe die Zeit für 60 Sekunden um perfekte Symbole zu wählen. (10min Cooldown)"
+                ],
+                cooldown: [900, 720, 600]
+            },
+            realityBender: {
+                cost: [400, 800, 1600],
+                desc: [
+                    "Erhöhe die Gewinnwahrscheinlichkeit um 10% für 25 Spins.",
+                    "Erhöhe die Gewinnwahrscheinlichkeit um 20% für 50 Spins.",
+                    "Erhöhe die Gewinnwahrscheinlichkeit um 30% für 100 Spins."
+                ]
+            },
+            prestigeAccelerator: {
+                cost: [250, 500, 1000, 2000, 4000],
+                desc: [
+                    "Erhalte 10% mehr Charm-Punkte pro Spin.",
+                    "Erhalte 25% mehr Charm-Punkte pro Spin.",
+                    "Erhalte 50% mehr Charm-Punkte pro Spin.",
+                    "Erhalte 100% mehr Charm-Punkte pro Spin.",
+                    "Erhalte 200% mehr Charm-Punkte pro Spin."
+                ]
+            },
+            blackHole: {
+                cost: [600, 1200, 2400],
+                desc: [
+                    "Verschlinge 10 Nieten für einen garantierten Jackpot. (30min Cooldown)",
+                    "Verschlinge 8 Nieten für einen garantierten Jackpot. (25min Cooldown)",
+                    "Verschlinge 5 Nieten für einen garantierten Jackpot. (20min Cooldown)"
+                ],
+                cooldown: [1800, 1500, 1200]
+            },
+            infinityGauntlet: {
+                cost: [1000, 0, 0],
+                desc: [
+                    "ULTIMATIVE MACHT: Verdopple alle Gewinne, halbiere alle Verluste, +50% Charm-Punkte. EINMALIG.",
+                    "Unendliche Macht erlangt!"
+                ]
+            }
+        };
+
+        // AUSZAHLUNGEN
+        const PAYOUTS = {
+            '🍒': [25, 30, 45],
+            '🍋': [25, 30, 45],
+            '💎': [30, 40, 70],
+            '🔔': [30, 40, 70],
+            '⭐': [40, 70, 170],
+            '7️⃣': [70, 120, 320],
+            'X': [22, 25, 30]
+        };
+
+        // DOM Elemente
+        const balanceDisplay = document.getElementById('balance');
+        const charmPointsDisplay = document.getElementById('charmPoints');
+        const blackMarketPointsDisplay = document.getElementById('blackMarketPoints');
+        const messageDisplay = document.getElementById('message');
+        const spinButton = document.getElementById('spinButton');
+        const slotGrid = document.getElementById('slotGrid');
+        const charmDescriptionDisplay = document.getElementById('charmDescription');
+        const blackMarketDescriptionDisplay = document.getElementById('blackMarketDescription');
+        const consecutiveLossesDisplay = document.getElementById('consecutiveLossesDisplay');
+        const consecutiveWinsDisplay = document.getElementById('consecutiveWinsDisplay');
+        const totalSpinsDisplay = document.getElementById('totalSpinsDisplay');
+        const boostedSymbolDisplay = document.getElementById('boostedSymbolDisplay');
+        const boostSymbolSelector = document.getElementById('boostSymbolSelector');
+        const boostSelectorDiv = document.getElementById('boostSelectorDiv');
+        const prestigeButton = document.getElementById('prestigeButton');
+        const prestigeLevelDisplay = document.getElementById('prestigeLevelDisplay');
+        const prestigeTimerDisplay = document.getElementById('prestigeTimerDisplay');
+        const bestTimeDisplay = document.getElementById('bestTimeDisplay');
+        const achievementsList = document.getElementById('achievementsList');
+
+        // Initialisiere Status-Elemente und Buttons
+        const statusElements = {};
+        const buyButtons = {};
+        
+        for (const key in permanentCharms) {
+            statusElements[`status${key.charAt(0).toUpperCase() + key.slice(1)}`] = 
+                document.getElementById(`status${key.charAt(0).toUpperCase() + key.slice(1)}`);
+            buyButtons[`buy${key.charAt(0).toUpperCase() + key.slice(1)}`] = 
+                document.getElementById(`buy${key.charAt(0).toUpperCase() + key.slice(1)}`);
+        }
+
+        for (const key in blackMarketItems) {
+            statusElements[`status${key.charAt(0).toUpperCase() + key.slice(1)}`] = 
+                document.getElementById(`status${key.charAt(0).toUpperCase() + key.slice(1)}`);
+            buyButtons[`buy${key.charAt(0).toUpperCase() + key.slice(1)}`] = 
+                document.getElementById(`buy${key.charAt(0).toUpperCase() + key.slice(1)}`);
+        }
+
+        let reelElements = [];
+        let slotResult = Array(NUM_ROWS).fill(0).map(() => Array(NUM_REELS).fill('?'));
+
+        // --- KERN FUNKTIONEN ---
+
+        function createSlotField() {
+            if (slotGrid.children.length > 0) return;
+
+            for (let row = 0; row < NUM_ROWS; row++) {
+                for (let reel = 0; reel < NUM_REELS; reel++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'reel-cell';
+                    cellDiv.id = `cell-${row}-${reel}`;
+                    
+                    const innerDiv = document.createElement('div');
+                    innerDiv.className = 'reel-inner';
+                    innerDiv.textContent = '?'; 
+                    cellDiv.appendChild(innerDiv);
+                    
+                    slotGrid.appendChild(cellDiv);
+                    reelElements.push(cellDiv);
+                }
+            }
+        }
+
+        function populateBoostSelector() {
+            const uniqueSymbols = [...new Set(symbols)];
+            uniqueSymbols.forEach(symbol => {
+                const option = document.createElement('option');
+                option.value = symbol;
+                option.textContent = symbol;
+                boostSymbolSelector.appendChild(option);
+            });
+            boostSymbolSelector.value = permanentCharms.boostSymbol;
+        }
+
+        function formatTime(ms) {
+            if (ms === 0) return '00h 00m 00s';
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            const h = hours.toString().padStart(2, '0');
+            const m = minutes.toString().padStart(2, '0');
+            const s = seconds.toString().padStart(2, '0');
+            
+            return `${h}h ${m}m ${s}s`;
+        }
+
+        function getAdjustedSymbols() {
+            const cacheKey = permanentCharms.doubleDiamond + '_' + permanentCharms.jackpotHunter;
+            if (symbolCache[cacheKey]) return symbolCache[cacheKey];
+            
+            let currentSymbols = [...symbols];
+            
+            // Double Diamond Charm
+            const diamondCount = [0, 1, 2, 4, 8, 16][permanentCharms.doubleDiamond] || 0;
+            for (let i = 0; i < diamondCount; i++) {
+                currentSymbols.push('💎');
+            }
+            
+            // Jackpot Hunter Charm
+            const sevenMultiplier = [1, 1.5, 2, 3, 4, 5][permanentCharms.jackpotHunter] || 1;
+            const sevenCount = Math.floor((symbols.filter(s => s === '7️⃣').length * sevenMultiplier) - symbols.filter(s => s === '7️⃣').length);
+            for (let i = 0; i < sevenCount; i++) {
+                currentSymbols.push('7️⃣');
+            }
+            
+            symbolCache[cacheKey] = currentSymbols;
+            return currentSymbols;
+        }
+
+        function getRandomSymbol() {
+            const adjustedSymbols = getAdjustedSymbols();
+            const randomIndex = Math.floor(Math.random() * adjustedSymbols.length);
+            return adjustedSymbols[randomIndex];
+        }
+
+        function getSpinDuration() {
+            let baseDuration = quickSpinMode ? 1000 : 3000;
+            switch (permanentCharms.speedBlessing) {
+                case 1: return baseDuration * 0.5;
+                case 2: return baseDuration * 0.3;
+                case 3: return baseDuration * 0.15;
+                case 4: return baseDuration * 0.1;
+                case 5: return baseDuration * 0.05;
+                default: return baseDuration;
+            }
+        }
+
+        function generateSlotResult() {
+            let result = Array(NUM_ROWS).fill(0).map(() => Array(NUM_REELS).fill(null));
+            
+            // Anti-Loss Boost
+            if (permanentCharms.antiLossBoost > 0 && consecutiveLosses >= [3, 3, 3, 2, 1][permanentCharms.antiLossBoost - 1]) {
+                const boostSymbol = permanentCharms.boostSymbol;
+                const boostReels = [3, 4, 5, 5, 5][permanentCharms.antiLossBoost - 1];
+                
+                for (let reel = 0; reel < NUM_REELS; reel++) {
+                    if (reel < boostReels) {
+                        result[1][reel] = boostSymbol;
+                    } else {
+                        result[1][reel] = getRandomSymbol();
+                    }
+                    for (let row = 0; row < NUM_ROWS; row++) {
+                        if (result[row][reel] === null) {
+                            result[row][reel] = getRandomSymbol();
+                        }
+                    }
+                }
+                
+                // Loss Streak Protection
+                if (permanentCharms.lossStreakProtection === 1) {
+                    consecutiveLosses = 1;
+                } else if (permanentCharms.lossStreakProtection === 2) {
+                    consecutiveLosses = 2;
+                } else if (permanentCharms.lossStreakProtection >= 3) {
+                    consecutiveLosses = 0;
+                    const bonus = [0, 0, 50, 100, 200][permanentCharms.lossStreakProtection];
+                    balance += bonus;
+                    if (bonus > 0) {
+                        messageDisplay.textContent += ` (+${bonus} Credits Schutz-Bonus!)`;
+                    }
+                } else {
+                    consecutiveLosses = 0;
+                }
+                updateAllDisplays();
+                return result;
+            }
+
+            // Lucky Start Charm
+            if (permanentCharms.luckyStart >= 1) {
+                let symbolToPlace = '🍒';
+                let reelsToPlace = 1;
+
+                if (permanentCharms.luckyStart === 2) {
+                    reelsToPlace = 2;
+                } else if (permanentCharms.luckyStart === 3) {
+                    symbolToPlace = '🍋';
+                    reelsToPlace = 2;
+                } else if (permanentCharms.luckyStart === 4) {
+                    symbolToPlace = '🔔';
+                    reelsToPlace = 3;
+                } else if (permanentCharms.luckyStart === 5) {
+                    symbolToPlace = '💎';
+                    reelsToPlace = 3;
+                }
+
+                for (let reel = 0; reel < reelsToPlace; reel++) {
+                    result[1][reel] = symbolToPlace;
+                }
+            }
+            
+            // Fülle Rest zufällig
+            for (let row = 0; row < NUM_ROWS; row++) {
+                for (let reel = 0; reel < NUM_REELS; reel++) {
+                    if (result[row][reel] === null) {
+                        result[row][reel] = getRandomSymbol();
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        function calculateWin(result) {
+            let totalWin = 0;
+            let winningCells = [];
+            let isPureSevensWin = true;
+            let didWin = false;
+            let isJackpot = false;
+
+            const getSymbol = (row, reel) => {
+                const symbol = result[row][reel];
+                if (permanentCharms.wildGem === 1 && symbol === '💎') return 'WILD';
+                if (permanentCharms.wildGem >= 2 && symbol === '💎') return 'WILD_7';
+                return symbol;
+            };
+            
+            const getBaseSymbol = (row, reel) => result[row][reel];
+
+            function checkLine(lineCoords) {
+                if (lineCoords.length < 3) return { win: 0, cells: [], isPure: false };
+
+                let currentSymbol = getSymbol(lineCoords[0][0], lineCoords[0][1]);
+                let count = 1;
+                let lineWinningCells = [[lineCoords[0][0], lineCoords[0][1]]];
+                let lineSymbols = [getBaseSymbol(lineCoords[0][0], lineCoords[0][1])];
+
+                for (let i = 1; i < lineCoords.length; i++) {
+                    const [row, reel] = lineCoords[i];
+                    const nextSymbol = getSymbol(row, reel);
+                    const nextBaseSymbol = getBaseSymbol(row, reel);
+                    
+                    if (currentSymbol === 'WILD' || currentSymbol === 'WILD_7') {
+                        if (nextSymbol !== 'WILD' && nextSymbol !== 'WILD_7' && (currentSymbol !== 'WILD' || nextSymbol !== '7️⃣')) {
+                            currentSymbol = nextSymbol;
+                        }
+                    } else if (nextSymbol === 'WILD') {
+                        if (currentSymbol !== '7️⃣') {
+                            // Zählt als Match
+                        } else {
+                            break;
+                        }
+                    } else if (nextSymbol === 'WILD_7') {
+                        // Wild_7 ersetzt alles
+                    } else if (currentSymbol !== nextSymbol) {
+                        break;
+                    }
+                    
+                    count++;
+                    lineWinningCells.push([row, reel]);
+                    lineSymbols.push(nextBaseSymbol);
+                }
+
+                if (count >= 3) {
+                    let payout = PAYOUTS[currentSymbol] ? PAYOUTS[currentSymbol][count - 3] : PAYOUTS['X'][count - 3];
+                    let winAmount = payout * lineBet;
+
+                    // Jackpot Hunter Bonus für 7er
+                    if (currentSymbol === '7️⃣' && permanentCharms.jackpotHunter >= 1) {
+                        const jackpotMultiplier = [1, 2, 3, 5, 10][permanentCharms.jackpotHunter];
+                        winAmount *= jackpotMultiplier;
+                        if (count === 5) isJackpot = true;
+                    }
+
+                    // Wild Gem Level 3+ Bonus
+                    if (permanentCharms.wildGem >= 3 && lineSymbols.includes('💎')) {
+                        const wildBonus = [1, 1, 1.1, 1.2, 1.5][permanentCharms.wildGem];
+                        winAmount *= wildBonus;
+                    }
+                    
+                    // Prestige Multiplier
+                    winAmount *= (1 + prestigeMultiplier);
+                    
+                    const isPure = lineSymbols.filter(s => s !== '7️⃣').length === 0 && lineCoords.length === NUM_REELS;
+                    
+                    return { win: Math.round(winAmount), cells: lineWinningCells, isPure: isPure };
+                }
+                
+                return { win: 0, cells: [], isPure: false };
+            }
+
+            // Horizontale Linien
+            for (let row = 0; row < NUM_ROWS; row++) {
+                const lineCoords = Array.from({ length: NUM_REELS }, (_, reel) => [row, reel]);
+                const { win, cells, isPure } = checkLine(lineCoords);
+                
+                if (win > 0) {
+                    totalWin += win;
+                    winningCells.push(...cells);
+                    didWin = true;
+                    if (!isPure) isPureSevensWin = false;
+                }
+            }
+
+            // Vertikale Linien
+            for (let reel = 0; reel < NUM_REELS; reel++) {
+                const lineCoords = Array.from({ length: NUM_ROWS }, (_, row) => [row, reel]);
+                const { win, cells } = checkLine(lineCoords);
+                
+                if (win > 0) {
+                    totalWin += win;
+                    winningCells.push(...cells);
+                    didWin = true;
+                    isPureSevensWin = false;
+                }
+            }
+            
+            // Purity Sevens Charm
+            if (didWin && isPureSevensWin && permanentCharms.puritySevens > 0) {
+                const multiplier = [1, 2, 3, 4, 5, 10][permanentCharms.puritySevens];
+                totalWin *= multiplier;
+                messageDisplay.textContent += ` (🔥 Siebener-Bonus: x${multiplier}!)`;
+            }
+
+            const uniqueWinningCells = Array.from(new Set(winningCells.map(JSON.stringify)), JSON.parse);
+            return { totalWin: Math.round(totalWin), winningCells: uniqueWinningCells, didWin, isJackpot };
+        }
+
+        // --- SPIN-FUNKTION ---
+        window.spin = function() {
+            try {
+                if (isSpinning) return;
+                
+                // All or Nothing aktiv?
+                if (blackMarketItems.allOrNothing > 0 && blackMarketCooldowns.allOrNothing <= 0) {
+                    if (confirm(`ALL OR NOTHING AKTIV! Nächster Spin: ${[10, 20, 50][blackMarketItems.allOrNothing-1]}x GEWINN oder ALLES VERLOREN! Fortsetzen?`)) {
+                        const multiplier = [10, 20, 50][blackMarketItems.allOrNothing - 1];
+                        const winChance = 0.3; // 30% Chance zu gewinnen
+                        
+                        if (Math.random() < winChance) {
+                            balance += currentBet * multiplier;
+                            messageDisplay.textContent = `🎊 ALL OR NOTHING GEWONNEN! ${currentBet * multiplier} Credits!`;
+                        } else {
+                            balance = 0;
+                            messageDisplay.textContent = `💀 ALL OR NOTHING VERLOREN! Alles weg!`;
+                        }
+                        blackMarketCooldowns.allOrNothing = BLACK_MARKET_DATA.allOrNothing.cooldown[blackMarketItems.allOrNothing - 1];
+                        updateAllDisplays();
+                        return;
+                    }
+                }
+
+                if (balance < currentBet) {
+                    if (permanentCharms.lastChance === 1 && !lastChanceUsed) {
+                        lastChanceUsed = true;
+                        balance += 500;
+                        messageDisplay.textContent = `🚫 Guthaben zu niedrig! Aber 'Letzte Chance' hat dir 500 Credits gegeben!`;
+                        updateAllDisplays();
+                        if (buyButtons.buyLastChance) {
+                            buyButtons.buyLastChance.disabled = true;
+                            buyButtons.buyLastChance.textContent = 'BEREITS EINGESETZT';
+                        }
+                        return;
+                    }
+                    messageDisplay.textContent = '🚫 Nicht genug Credits für einen Spin!';
+                    spinButton.disabled = true;
+                    return;
+                }
+
+                // Prestige Timer starten
+                if (!isTimingPrestige) {
+                    isTimingPrestige = true;
+                    prestigeStartTime = new Date().getTime();
+                    messageDisplay.textContent = '⏱️ Prestige-Lauf gestartet!';
+                    updateTimer();
+                }
+                
+                balance -= currentBet;
+                totalSpins++;
+                isSpinning = true;
+                spinButton.disabled = true;
+                reelElements.forEach(cell => {
+                    cell.classList.remove('win-highlight');
+                    cell.classList.remove('jackpot-highlight');
+                });
+
+                slotResult = generateSlotResult();
+                const spinDuration = getSpinDuration();
+                const finalStopDuration = 500;
+
+                // Animation
+                for (let reel = 0; reel < NUM_REELS; reel++) {
+                    setTimeout(() => {
+                        for (let row = 0; row < NUM_ROWS; row++) {
+                            const cell = document.getElementById(`cell-${row}-${reel}`);
+                            const innerDiv = cell.querySelector('.reel-inner');
+                            
+                            innerDiv.textContent = '';
+                            
+                            let symbolStack = '';
+                            const stackLength = 50;
+                            for (let i = 0; i < stackLength; i++) {
+                                symbolStack += getRandomSymbol() + '\n';
+                            }
+                            
+                            symbolStack += slotResult[0][reel] + '\n';
+                            symbolStack += slotResult[1][reel] + '\n';
+                            symbolStack += slotResult[2][reel];
+                            innerDiv.textContent = symbolStack;
+                            
+                            cell.classList.add('spinning');
+                            innerDiv.style.transition = 'none';
+                            innerDiv.style.animationPlayState = 'running';
+                        }
+                    }, reel * 150);
+                }
+
+                // Stopp Animation
+                for (let reel = 0; reel < NUM_REELS; reel++) {
+                    const finalStopDelay = spinDuration + (reel * 150);
+                    
+                    setTimeout(() => {
+                        for (let row = 0; row < NUM_ROWS; row++) {
+                            const cell = document.getElementById(`cell-${row}-${reel}`);
+                            const innerDiv = cell.querySelector('.reel-inner');
+                            
+                            innerDiv.style.animationPlayState = 'paused';
+                            innerDiv.style.transition = `transform ${finalStopDuration}ms cubic-bezier(0.1, 0.9, 0.2, 1), filter 0.2s`;
+                            
+                            const stackLength = 50;
+                            let symbolIndex = stackLength + row;
+                            let targetPosition = -symbolIndex * SYMBOL_HEIGHT;
+                            
+                            innerDiv.style.transform = `translateY(${targetPosition}px)`;
+                            
+                            setTimeout(() => {
+                                cell.classList.remove('spinning');
+                            }, finalStopDuration);
+                        }
+                    }, finalStopDelay);
+                }
+
+                // Ergebnis
+                setTimeout(() => {
+                    isSpinning = false;
+                    spinButton.disabled = false;
+                    
+                    for (let reel = 0; reel < NUM_REELS; reel++) {
+                        for (let row = 0; row < NUM_ROWS; row++) {
+                            const cell = document.getElementById(`cell-${row}-${reel}`);
+                            const innerDiv = cell.querySelector('.reel-inner');
+                            
+                            innerDiv.textContent = slotResult[row][reel];
+                            innerDiv.style.animationPlayState = 'initial';
+                            innerDiv.style.transition = 'none';
+                            innerDiv.style.transform = 'translateY(0)';
+                            cell.classList.remove('spinning');
+                        }
+                    }
+                    
+                    const { totalWin, winningCells, didWin, isJackpot } = calculateWin(slotResult);
+                    let charmPointsGained = 0;
+                    let blackMarketPointsGained = 0;
+
+                    if (didWin) {
+                        let finalWin = totalWin;
+                        
+                        // Double Trouble Multiplikator
+                        if (blackMarketItems.doubleTrouble > 0) {
+                            finalWin *= (blackMarketItems.doubleTrouble + 1);
+                            messageDisplay.textContent = `🎉 GEWONNEN! ${finalWin} Credits (x${blackMarketItems.doubleTrouble + 1} Double Trouble!)`;
+                        } else {
+                            messageDisplay.textContent = `🎉 GEWONNEN! ${finalWin} Credits!`;
+                        }
+                        
+                        // Infinity Gauntlet Bonus
+                        if (blackMarketItems.infinityGauntlet > 0) {
+                            finalWin *= 2;
+                            messageDisplay.textContent += ` (x2 Infinity Gauntlet!)`;
+                        }
+                        
+                        // Soul Contract Bonus
+                        if (blackMarketItems.soulContract > 0) {
+                            finalWin *= 1.25;
+                            messageDisplay.textContent += ` (x1.25 Soul Contract!)`;
+                        }
+                        
+                        balance += finalWin;
+                        consecutiveLosses = 0;
+                        consecutiveWins++;
+                        
+                        // Jackpot Achievement
+                        if (isJackpot && !achievements.jackpotKing.unlocked) {
+                            unlockAchievement('jackpotKing');
+                        }
+
+                        charmPointsGained = Math.min(50 + Math.floor(finalWin / 100) * 10, 300);
+                        blackMarketPointsGained = Math.floor(finalWin / 500);
+
+                        // Highlight Cells
+                        winningCells.forEach(([row, reel]) => {
+                            const cell = document.getElementById(`cell-${row}-${reel}`);
+                            cell.classList.add(isJackpot ? 'jackpot-highlight' : 'win-highlight');
+                        });
+                        
+                        // First Win Achievement
+                        if (totalSpins === 1 && !achievements.firstWin.unlocked) {
+                            unlockAchievement('firstWin');
+                        }
+
+                    } else {
+                        let lossAmount = currentBet;
+                        
+                        // Double Trouble Verlust
+                        if (blackMarketItems.doubleTrouble > 0) {
+                            lossAmount *= (blackMarketItems.doubleTrouble + 1);
+                            balance -= lossAmount; // Zusätzlicher Verlust
+                            messageDisplay.textContent = `😭 NIETE! Verlust: ${lossAmount} Credits (x${blackMarketItems.doubleTrouble + 1} Double Trouble!)`;
+                        } else {
+                            messageDisplay.textContent = `😭 NIETE!`;
+                        }
+                        
+                        consecutiveLosses++;
+                        consecutiveWins = 0;
+                        
+                        // Consolation Prize
+                        if (permanentCharms.consolationPrize > 0) {
+                            const refund = [0, 10, 20, 30, 50, 100][permanentCharms.consolationPrize];
+                            balance += refund;
+                            messageDisplay.textContent += ` Trostpreis: ${refund} Credits zurück.`;
+                        }
+
+                        // Black Hole
+                        if (blackMarketItems.blackHole > 0 && blackMarketCooldowns.blackHole <= 0 && consecutiveLosses >= [10, 8, 5][blackMarketItems.blackHole - 1]) {
+                            balance += currentBet * 100; // Jackpot
+                            messageDisplay.textContent += ` 🕳️ BLACK HOLE JACKPOT! ${currentBet * 100} Credits!`;
+                            blackMarketCooldowns.blackHole = BLACK_MARKET_DATA.blackHole.cooldown[blackMarketItems.blackHole - 1];
+                            consecutiveLosses = 0;
+                        }
+                        
+                        // Mystery Box
+                        if (permanentCharms.mysteryBox > 0 && consecutiveLosses % [0, 10, 7, 5, 3, 1][permanentCharms.mysteryBox] === 0) {
+                            const minReward = [0, 100, 200, 300, 500, 100][permanentCharms.mysteryBox];
+                            const maxReward = [0, 500, 600, 800, 1000, 200][permanentCharms.mysteryBox];
+                            const mysteryReward = minReward + Math.floor(Math.random() * (maxReward - minReward));
+                            balance += mysteryReward;
+                            messageDisplay.textContent += ` 🎁 MYSTERY BOX: ${mysteryReward} Credits!`;
+                        }
+                        
+                        charmPointsGained = 5;
+                        blackMarketPointsGained = 1;
+                    }
+                    
+                    // Charm Mastery
+                    const minCharmPoints = [5, 10, 15, 20, 30, 50][permanentCharms.charmMastery];
+                    charmPointsGained = Math.max(charmPointsGained, minCharmPoints);
+                    
+                    // Prestige Accelerator
+                    if (blackMarketItems.prestigeAccelerator > 0) {
+                        const acceleratorBonus = [0, 0.1, 0.25, 0.5, 1.0, 2.0][blackMarketItems.prestigeAccelerator];
+                        charmPointsGained *= (1 + acceleratorBonus);
+                    }
+                    
+                    // Wealth Blessing
+                    if (permanentCharms.wealthBlessing > 0) {
+                        const wealthBonus = Math.floor(balance / 50) * [0, 1, 1.5, 2, 3, 5][permanentCharms.wealthBlessing];
+                        charmPointsGained += wealthBonus;
+                    }
+                    
+                    // Lucky Money
+                    if (permanentCharms.luckyMoney > 0) {
+                        const creditBonus = Math.min(charmPointsGained * [0, 1, 1.5, 2, 3, 5][permanentCharms.luckyMoney], [0, 200, 300, 400, 600, 1000][permanentCharms.luckyMoney]);
+                        balance += creditBonus;
+                        messageDisplay.textContent += ` (+${Math.round(creditBonus)} Credits Lucky Money)`;
+                    }
+                    
+                    charmPoints += Math.round(charmPointsGained);
+                    blackMarketPoints += blackMarketPointsGained;
+                    
+                    // Achievements prüfen
+                    checkAchievements();
+                    saveGame();
+                    updateAllDisplays();
+
+                }, spinDuration + (NUM_REELS * 150) + finalStopDuration);
+
+            } catch (error) {
+                console.error('Spin error:', error);
+                messageDisplay.textContent = '❌ Ein Fehler ist aufgetreten. Bitte neu laden.';
+                isSpinning = false;
+                spinButton.disabled = false;
+            }
+        }
+
+        // --- SCHWARZMARKT FUNKTIONEN ---
+
+        window.buyBlackMarketItem = function(itemKey) {
+            const level = blackMarketItems[itemKey];
+            if (level >= MAX_BLACK_MARKET_LEVEL) return;
+
+            const nextCost = BLACK_MARKET_DATA[itemKey].cost[level];
+            
+            if (blackMarketPoints >= nextCost) {
+                if (itemKey === 'soulContract' && level === 1) return;
+                if (itemKey === 'infinityGauntlet' && level === 1) return;
+                
+                blackMarketPoints -= nextCost;
+                blackMarketItems[itemKey]++;
+                
+                // Cooldown setzen falls vorhanden
+                if (BLACK_MARKET_DATA[itemKey].cooldown && level === 0) {
+                    blackMarketCooldowns[itemKey] = 0;
+                }
+                
+                messageDisplay.textContent = `🔦 Schwarzmarkt: **${itemKey.charAt(0).toUpperCase() + itemKey.slice(1)}** auf Level ${blackMarketItems[itemKey]}!`;
+                
+                updateAllDisplays();
+                saveGame();
+            } else {
+                messageDisplay.textContent = `Nicht genug Schwarzmarkt-Punkte! Benötigt: ${nextCost} 🔥.`;
+            }
+        }
+
+        window.showBlackMarketInfo = function(itemKey) {
+            const level = blackMarketItems[itemKey];
+            const nextLevel = level + 1;
+            
+            let currentDesc = level > 0 ? 
+                `<strong>Aktuell (Lvl ${level}):</strong> ${BLACK_MARKET_DATA[itemKey].desc[level - 1]} ` : 
+                `<strong>Noch nicht gekauft.</strong>`;
+            
+            let statusText = "";
+
+            if (level === MAX_BLACK_MARKET_LEVEL || 
+                (itemKey === 'soulContract' && level === 1) ||
+                (itemKey === 'infinityGauntlet' && level === 1)) {
+                statusText = " <span style='color: #ffd700'>(MAX LEVEL)</span>";
+            } else {
+                const nextCost = BLACK_MARKET_DATA[itemKey].cost[level];
+                const nextDesc = BLACK_MARKET_DATA[itemKey].desc[level];
+                
+                statusText = `<br><strong>Nächster Kauf (Lvl ${nextLevel}, ${nextCost} 🔥):</strong> ${nextDesc}`;
+            }
+            
+            // Cooldown anzeigen
+            if (blackMarketCooldowns[itemKey] > 0) {
+                const minutes = Math.floor(blackMarketCooldowns[itemKey] / 60);
+                const seconds = blackMarketCooldowns[itemKey] % 60;
+                statusText += `<br><span style="color: #ff6666">⏰ Cooldown: ${minutes}m ${seconds}s</span>`;
+            }
+            
+            blackMarketDescriptionDisplay.innerHTML = `${currentDesc}${statusText}`;
+        }
+
+        // --- ACHIEVEMENT SYSTEM ---
+
+        function unlockAchievement(achievementKey) {
+            const achievement = achievements[achievementKey];
+            if (!achievement.unlocked) {
+                achievement.unlocked = true;
+                charmPoints += achievement.reward;
+                messageDisplay.textContent += ` 🏆 ACHIEVEMENT: "${achievement.name}" freigeschaltet! +${achievement.reward} P`;
+                updateAchievementsDisplay();
+                saveGame();
+            }
+        }
+
+        function checkAchievements() {
+            // Prestige Master
+            if (prestigeLevel >= 5 && !achievements.prestigeMaster.unlocked) {
+                unlockAchievement('prestigeMaster');
+            }
+            
+            // Spin Addict
+            if (totalSpins >= 1000 && !achievements.spinAddict.unlocked) {
+                unlockAchievement('spinAddict');
+            }
+            
+            // Millionaire
+            if (balance >= 1000000 && !achievements.millionaire.unlocked) {
+                unlockAchievement('millionaire');
+            }
+            
+            // Unlucky
+            if (consecutiveLosses >= 20 && !achievements.unlucky.unlocked) {
+                unlockAchievement('unlucky');
+            }
+            
+            // Lucky Streak
+            if (consecutiveWins >= 10 && !achievements.luckyStreak.unlocked) {
+                unlockAchievement('luckyStreak');
+            }
+            
+            // Schwarzmarkt Lord
+            const allBlackMarketMax = Object.values(blackMarketItems).every((level, index) => {
+                const itemKey = Object.keys(blackMarketItems)[index];
+                const maxLevel = itemKey === 'soulContract' || itemKey === 'infinityGauntlet' ? 1 : MAX_BLACK_MARKET_LEVEL;
+                return level >= maxLevel;
+            });
+            if (allBlackMarketMax && !achievements.blackMarketLord.unlocked) {
+                unlockAchievement('blackMarketLord');
+            }
+        }
+
+        function updateAchievementsDisplay() {
+            achievementsList.innerHTML = '';
+            Object.entries(achievements).forEach(([key, achievement]) => {
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = `charm-item ${achievement.unlocked ? 'achievement-unlocked' : 'achievement-locked'}`;
+                achievementDiv.innerHTML = `
+                    <div class="charm-header">
+                        <strong>${achievement.unlocked ? '🏆' : '🔒'} ${achievement.name}</strong>
+                        <span class="charm-level">+${achievement.reward}P</span>
+                    </div>
+                    <div>${achievement.description}</div>
+                    ${achievement.unlocked ? '<div style="color: #00ff88; margin-top: 5px;">✓ Freigeschaltet</div>' : ''}
+                `;
+                achievementsList.appendChild(achievementDiv);
+            });
+        }
+
+        // --- COOLDOWN SYSTEM ---
+
+        function updateCooldowns() {
+            Object.keys(blackMarketCooldowns).forEach(key => {
+                if (blackMarketCooldowns[key] > 0) {
+                    blackMarketCooldowns[key]--;
+                    const cooldownElement = document.getElementById(`cooldown${key.charAt(0).toUpperCase() + key.slice(1)}`);
+                    if (cooldownElement) {
+                        const minutes = Math.floor(blackMarketCooldowns[key] / 60);
+                        const seconds = blackMarketCooldowns[key] % 60;
+                        cooldownElement.textContent = `⏰ ${minutes}m ${seconds}s`;
+                    }
+                }
+            });
+        }
+
+        // --- WEITERE FUNKTIONEN ---
+
+        window.maxBet = function() {
+            currentBet = Math.min(balance, 1000); // Max 1000 Einsatz
+            updateAllDisplays();
+            messageDisplay.textContent = `Einsatz auf ${currentBet} Credits gesetzt!`;
+        }
+
+        window.quickSpin = function() {
+            quickSpinMode = !quickSpinMode;
+            messageDisplay.textContent = quickSpinMode ? 
+                '⚡ Schnelldreh MODUS AKTIVIERT' : 
+                '🐌 Schnelldreh MODUS DEAKTIVIERT';
+        }
+
+        window.setBoostSymbol = function(symbol) {
+            permanentCharms.boostSymbol = symbol;
+            updateAllDisplays();
+            messageDisplay.textContent = `Boost-Symbol auf ${symbol} gesetzt.`;
+        }
+
+        window.buyPermanentCharm = function(charmKey) {
+            const level = permanentCharms[charmKey];
+            if (level >= MAX_CHARM_LEVEL) return;
+
+            const nextCost = CHARM_DATA[charmKey].cost[level];
+            
+            if (charmPoints >= nextCost) {
+                if (charmKey === 'lastChance' && level === 1) return;
+                
+                charmPoints -= nextCost;
+                permanentCharms[charmKey]++;
+                
+                messageDisplay.textContent = `Charm **${charmKey.charAt(0).toUpperCase() + charmKey.slice(1)}** auf Level ${permanentCharms[charmKey]} upgegradet!`;
+                
+                updateAllDisplays();
+                saveGame();
+            } else {
+                messageDisplay.textContent = `Nicht genug Charm-Punkte! Benötigt: ${nextCost} P.`;
+            }
+        }
+
+        window.showPermanentCharmInfo = function(charmKey) {
+            const level = permanentCharms[charmKey];
+            const nextLevel = level + 1;
+            
+            let currentDesc = level > 0 ? 
+                `<strong>Aktuell (Lvl ${level}):</strong> ${CHARM_DATA[charmKey].desc[level - 1]} ` : 
+                `<strong>Noch nicht gekauft.</strong>`;
+            
+            let statusText = "";
+
+            if (level === MAX_CHARM_LEVEL || (charmKey === 'lastChance' && level === 1)) {
+                statusText = " <span style='color: #ffd700'>(MAX LEVEL)</span>";
+            } else {
+                const nextCost = CHARM_DATA[charmKey].cost[level];
+                const nextDesc = CHARM_DATA[charmKey].desc[level];
+                
+                statusText = `<br><strong>Nächster Kauf (Lvl ${nextLevel}, ${nextCost} P):</strong> ${nextDesc}`;
+            }
+            
+            charmDescriptionDisplay.innerHTML = `${currentDesc}${statusText}`;
+        }
+
+        window.clearCharmInfo = function() {
+            charmDescriptionDisplay.textContent = "Klicke auf einen Charm, um die Beschreibung zu sehen!";
+        }
+
+        // --- FEHLERBEHEBUNG: FEHLENDE FUNKTIONEN HINZUGEFÜGT ---
+        
+        // Timer-Update-Funktion
+        function updateTimer() {
+            if (isTimingPrestige && prestigeStartTime !== null) {
+                const now = new Date().getTime();
+                const elapsed = now - prestigeStartTime;
+                prestigeTimerDisplay.innerHTML = `<span class="info-label">⏱️ Prestige Zeit:</span> <span class="info-value">${formatTime(elapsed)}</span>`;
+                setTimeout(updateTimer, 1000);
+            } else if (prestigeStartTime === null) {
+                prestigeTimerDisplay.innerHTML = `<span class="info-label">⏱️ Prestige Zeit:</span> <span class="info-value">Nicht gestartet</span>`;
+            }
+        }
+
+        // Prestige Funktion - KORRIGIERT
+        window.activatePrestige = function() {
+            if (charmPoints < PRESTIGE_COST) {
+                messageDisplay.textContent = `Du brauchst ${PRESTIGE_COST} Charm-Punkte, um Prestige zu aktivieren!`;
+                return;
+            }
+            
+            let timeElapsed = 0;
+            if (isTimingPrestige && prestigeStartTime !== null) {
+                const endTime = new Date().getTime();
+                timeElapsed = endTime - prestigeStartTime;
+                isTimingPrestige = false;
+            }
+
+            // KORREKTUR: Variable wurde hier nicht korrekt deklariert
+            let timeMessage = timeElapsed > 0 ? `\n\nDeine Zeit für diesen Lauf: ${formatTime(timeElapsed)}` : '';
+            
+            // Soul Contract Penalty
+            let charmPointsLoss = 0;
+            if (blackMarketItems.soulContract > 0) {
+                charmPointsLoss = Math.floor(charmPoints * 0.1);
+                timeMessage += `\n\nSoul Contract Penalty: -${charmPointsLoss} Charm-Punkte`;
+            }
+
+            if (!confirm(`Bist du sicher? Du verlierst ALLES, gewinnst aber Prestige Level ${prestigeLevel + 1} mit einem permanenten 10% Gewinn-Bonus!${timeMessage}`)) {
+                return;
+            }
+
+            let newRecord = false;
+            if (timeElapsed > 0) {
+                const bestTime = localStorage.getItem('bestPrestigeTime');
+                if (bestTime === null || timeElapsed < parseInt(bestTime)) {
+                    localStorage.setItem('bestPrestigeTime', timeElapsed);
+                    newRecord = true;
+                }
+            }
+
+            prestigeLevel++;
+            prestigeMultiplier += 0.10;
+            lastChanceUsed = false;
+
+            // Harter Reset mit Soul Contract Penalty
+            balance = initialBalance;
+            charmPoints = Math.max(0, charmPoints - charmPointsLoss);
+            consecutiveLosses = 0;
+            consecutiveWins = 0;
+            totalSpins = 0;
+            prestigeStartTime = null;
+            isTimingPrestige = false;
+
+            // Charms zurücksetzen, aber Schwarzmarkt-Items behalten
+            permanentCharms = {
+                luckyStart: 0, doubleDiamond: 0, antiLossBoost: 0,
+                boostSymbol: '🍒', charmMastery: 0, puritySevens: 0, wildGem: 0,
+                lossStreakProtection: 0, luckyMoney: 0, freeUpgrade: 0,
+                consolationPrize: 0, wealthBlessing: 0, lastChance: 0, speedBlessing: 0,
+                mysteryBox: 0, jackpotHunter: 0, timeWarp: 0
+            };
+
+            updateAllDisplays();
+
+            if (newRecord) {
+                messageDisplay.textContent = `🏆 NEUER REKORD! Prestige in ${formatTime(timeElapsed)}! Level ${prestigeLevel} Bonus: +${(prestigeMultiplier * 100).toFixed(0)}% Gewinne.`;
+            } else {
+                messageDisplay.textContent = `⭐ PRESTIGE AKTIVIERT! Zeit: ${formatTime(timeElapsed)}. Level ${prestigeLevel} Bonus: +${(prestigeMultiplier * 100).toFixed(0)}% Gewinne.`;
+            }
+
+            if (charmPointsLoss > 0) {
+                messageDisplay.textContent += ` Soul Contract Penalty: -${charmPointsLoss} P`;
+            }
+
+            spinButton.disabled = false;
+            saveGame();
+        }
+
+        // Reset Funktion
+        window.resetGame = function() {
+            if (!confirm('Bist du sicher? Alle Fortschritte gehen verloren!')) return;
+            
+            balance = initialBalance;
+            charmPoints = 0;
+            blackMarketPoints = 0;
+            consecutiveLosses = 0;
+            consecutiveWins = 0;
+            totalSpins = 0;
+            lastChanceUsed = false;
+            prestigeLevel = 0;
+            prestigeMultiplier = 0;
+            prestigeStartTime = null;
+            isTimingPrestige = false;
+
+            permanentCharms = {
+                luckyStart: 0, doubleDiamond: 0, antiLossBoost: 0,
+                boostSymbol: '🍒', charmMastery: 0, puritySevens: 0, wildGem: 0,
+                lossStreakProtection: 0, luckyMoney: 0, freeUpgrade: 0,
+                consolationPrize: 0, wealthBlessing: 0, lastChance: 0, speedBlessing: 0,
+                mysteryBox: 0, jackpotHunter: 0, timeWarp: 0
+            };
+
+            blackMarketItems = {
+                allOrNothing: 0, doubleTrouble: 0, luckStealer: 0,
+                soulContract: 0, timeManipulation: 0, realityBender: 0,
+                prestigeAccelerator: 0, blackHole: 0, infinityGauntlet: 0
+            };
+
+            Object.keys(blackMarketCooldowns).forEach(key => {
+                blackMarketCooldowns[key] = 0;
+            });
+
+            Object.keys(achievements).forEach(key => {
+                achievements[key].unlocked = false;
+            });
+
+            updateAllDisplays();
+            updateAchievementsDisplay();
+
+            messageDisplay.textContent = "Spiel neugestartet! Starte mit " + initialBalance + " Credits.";
+            spinButton.disabled = false;
+            reelElements.forEach(cell => {
+                const innerDiv = cell.querySelector('.reel-inner');
+                innerDiv.textContent = '?';
+                cell.classList.remove('win-highlight');
+                cell.classList.remove('jackpot-highlight');
+                cell.classList.remove('spinning');
+                innerDiv.style.animationPlayState = 'initial';
+                innerDiv.style.transition = 'none';
+                innerDiv.style.transform = 'translateY(0)';
+            });
+            
+            saveGame();
+        }
+
+        // Save/Load Funktionen
+        window.saveGame = function() {
+            const gameState = {
+                balance,
+                charmPoints,
+                blackMarketPoints,
+                consecutiveLosses,
+                consecutiveWins,
+                totalSpins,
+                lastChanceUsed,
+                prestigeLevel,
+                prestigeMultiplier,
+                permanentCharms,
+                blackMarketItems,
+                blackMarketCooldowns,
+                achievements,
+                prestigeStartTime,
+                isTimingPrestige
+            };
+            try {
+                localStorage.setItem('slotMachineSave', JSON.stringify(gameState));
+                messageDisplay.textContent = '💾 Spielstand gespeichert!';
+            } catch (e) {
+                console.error('Save error:', e);
+            }
+        }
+
+        window.loadGame = function() {
+            try {
+                const saved = localStorage.getItem('slotMachineSave');
+                if (saved) {
+                    const gameState = JSON.parse(saved);
+                    
+                    // Grundlegende Werte
+                    balance = gameState.balance || initialBalance;
+                    charmPoints = gameState.charmPoints || 0;
+                    blackMarketPoints = gameState.blackMarketPoints || 0;
+                    consecutiveLosses = gameState.consecutiveLosses || 0;
+                    consecutiveWins = gameState.consecutiveWins || 0;
+                    totalSpins = gameState.totalSpins || 0;
+                    lastChanceUsed = gameState.lastChanceUsed || false;
+                    prestigeLevel = gameState.prestigeLevel || 0;
+                    prestigeMultiplier = gameState.prestigeMultiplier || 0;
+                    
+                    // Komplexe Objekte mit Fallbacks
+                    permanentCharms = { ...{
+                        luckyStart: 0, doubleDiamond: 0, antiLossBoost: 0,
+                        boostSymbol: '🍒', charmMastery: 0, puritySevens: 0, wildGem: 0,
+                        lossStreakProtection: 0, luckyMoney: 0, freeUpgrade: 0,
+                        consolationPrize: 0, wealthBlessing: 0, lastChance: 0, speedBlessing: 0,
+                        mysteryBox: 0, jackpotHunter: 0, timeWarp: 0
+                    }, ...gameState.permanentCharms };
+                    
+                    blackMarketItems = { ...{
+                        allOrNothing: 0, doubleTrouble: 0, luckStealer: 0,
+                        soulContract: 0, timeManipulation: 0, realityBender: 0,
+                        prestigeAccelerator: 0, blackHole: 0, infinityGauntlet: 0
+                    }, ...gameState.blackMarketItems };
+                    
+                    blackMarketCooldowns = { ...{
+                        allOrNothing: 0, luckStealer: 0, timeManipulation: 0, blackHole: 0
+                    }, ...gameState.blackMarketCooldowns };
+                    
+                    achievements = { ...{
+                        firstWin: { unlocked: false, name: "Erster Gewinn", description: "Gewinne dein erstes Spiel", reward: 100 },
+                        jackpotKing: { unlocked: false, name: "Jackpot König", description: "Gewinne einen 5x 7er Jackpot", reward: 500 },
+                        prestigeMaster: { unlocked: false, name: "Prestige Meister", description: "Erreiche Prestige Level 5", reward: 1000 },
+                        blackMarketLord: { unlocked: false, name: "Schwarzmarkt Lord", description: "Kaufe alle Schwarzmarkt-Items", reward: 2000 },
+                        spinAddict: { unlocked: false, name: "Spin-Süchtiger", description: "Mache 1000 Spins", reward: 500 },
+                        millionaire: { unlocked: false, name: "Millionär", description: "Erreiche 1.000.000 Credits", reward: 5000 },
+                        unlucky: { unlocked: false, name: "Unglückspilz", description: "Habe 20 Nieten in Folge", reward: 200 },
+                        luckyStreak: { unlocked: false, name: "Glückssträhne", description: "Habe 10 Gewinne in Folge", reward: 300 }
+                    }, ...gameState.achievements };
+                    
+                    prestigeStartTime = gameState.prestigeStartTime || null;
+                    isTimingPrestige = gameState.isTimingPrestige || false;
+                    
+                    updateAllDisplays();
+                    updateAchievementsDisplay();
+                    messageDisplay.textContent = '📂 Spielstand geladen!';
+                } else {
+                    messageDisplay.textContent = '❌ Kein Spielstand gefunden!';
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+                messageDisplay.textContent = '❌ Fehler beim Laden des Spielstands!';
+            }
+        }
+
+        function updateAllDisplays() {
+            balanceDisplay.textContent = balance;
+            charmPointsDisplay.textContent = charmPoints;
+            blackMarketPointsDisplay.textContent = blackMarketPoints;
+            consecutiveLossesDisplay.textContent = consecutiveLosses;
+            consecutiveWinsDisplay.textContent = consecutiveWins;
+            totalSpinsDisplay.textContent = totalSpins;
+            prestigeLevelDisplay.innerHTML = `<span class="info-label">Prestige Level:</span> <span class="prestige-value">${prestigeLevel} (Bonus: +${(prestigeMultiplier * 100).toFixed(0)}%)</span>`;
+            
+            // Bestzeit
+            const bestTime = localStorage.getItem('bestPrestigeTime');
+            bestTimeDisplay.innerHTML = bestTime ? 
+                `<span class="info-label">🏆 Bestzeit:</span> <span class="info-value">${formatTime(parseInt(bestTime))}</span>` : 
+                `<span class="info-label">🏆 Bestzeit:</span> <span class="info-value">Keine</span>`;
+            
+            // Charm Status & Buttons
+            for (const key in permanentCharms) {
+                const level = permanentCharms[key];
+                const statusElement = statusElements[`status${key.charAt(0).toUpperCase() + key.slice(1)}`];
+                const buttonElement = buyButtons[`buy${key.charAt(0).toUpperCase() + key.slice(1)}`];
+                const progressElement = document.getElementById(`progress${key.charAt(0).toUpperCase() + key.slice(1)}`);
+                
+                if (statusElement) {
+                    statusElement.textContent = level;
+                    if (level === MAX_CHARM_LEVEL || (key === 'lastChance' && level === 1)) {
+                        statusElement.classList.add('max');
+                    } else {
+                        statusElement.classList.remove('max');
+                    }
+                }
+
+                if (progressElement) {
+                    const progress = (level / MAX_CHARM_LEVEL) * 100;
+                    progressElement.style.width = `${progress}%`;
+                }
+
+                if (buttonElement) {
+                    if (level >= MAX_CHARM_LEVEL || (key === 'lastChance' && level === 1 && !lastChanceUsed)) {
+                        buttonElement.disabled = true;
+                        buttonElement.textContent = (key === 'lastChance' && !lastChanceUsed) ? 'EINMALIG GEKAUFT' : 'MAX LEVEL';
+                    } else if (key === 'lastChance' && lastChanceUsed) {
+                        buttonElement.disabled = true;
+                        buttonElement.textContent = 'BEREITS EINGESETZT';
+                    } else {
+                        const nextCost = CHARM_DATA[key].cost[level];
+                        buttonElement.disabled = charmPoints < nextCost;
+                        buttonElement.textContent = `KAUFEN (${nextCost} P)`;
+                    }
+                }
+            }
+
+            // Schwarzmarkt Status & Buttons
+            for (const key in blackMarketItems) {
+                const level = blackMarketItems[key];
+                const statusElement = statusElements[`status${key.charAt(0).toUpperCase() + key.slice(1)}`];
+                const buttonElement = buyButtons[`buy${key.charAt(0).toUpperCase() + key.slice(1)}`];
+                const progressElement = document.getElementById(`progress${key.charAt(0).toUpperCase() + key.slice(1)}`);
+                const maxLevel = (key === 'soulContract' || key === 'infinityGauntlet') ? 1 : MAX_BLACK_MARKET_LEVEL;
+                
+                if (statusElement) {
+                    statusElement.textContent = level;
+                    if (level >= maxLevel) {
+                        statusElement.classList.add('max');
+                    } else {
+                        statusElement.classList.remove('max');
+                    }
+                }
+
+                if (progressElement) {
+                    const progress = (level / maxLevel) * 100;
+                    progressElement.style.width = `${progress}%`;
+                }
+
+                if (buttonElement) {
+                    if (level >= maxLevel) {
+                        buttonElement.disabled = true;
+                        buttonElement.textContent = 'MAX LEVEL';
+                    } else {
+                        const nextCost = BLACK_MARKET_DATA[key].cost[level];
+                        buttonElement.disabled = blackMarketPoints < nextCost;
+                        buttonElement.textContent = `KAUFEN (${nextCost} 🔥)`;
+                    }
+                }
+            }
+
+            // Prestige Button
+            prestigeButton.disabled = charmPoints < PRESTIGE_COST;
+            prestigeButton.textContent = `PRESTIGE AKTIVIEREN (${PRESTIGE_COST} P benötigt)`;
+            
+            // Anti-Loss Boost Anzeige
+            if (permanentCharms.antiLossBoost > 0) {
+                boostSelectorDiv.style.display = 'block';
+                boostedSymbolDisplay.textContent = permanentCharms.boostSymbol;
+                boostSymbolSelector.value = permanentCharms.boostSymbol;
+            } else {
+                boostSelectorDiv.style.display = 'none';
+                boostedSymbolDisplay.textContent = 'Keins';
+            }
+            
+            spinButton.textContent = `DREHEN (${currentBet} Credits)`;
+            document.getElementById('currentBet').textContent = currentBet;
+        }
+
+        // Initialisierung
+        createSlotField();
+        populateBoostSelector();
+        updateAllDisplays();
+        updateAchievementsDisplay();
+        
+        // Auto-Load beim Start
+        window.addEventListener('load', function() {
+            setTimeout(loadGame, 100);
+        });
+
+        // Auto-Save beim Verlassen
+        window.addEventListener('beforeunload', saveGame);
+
+        // Cooldown Timer starten
+        setInterval(updateCooldowns, 1000);
+    </script>
+
+</body>
+</html>
